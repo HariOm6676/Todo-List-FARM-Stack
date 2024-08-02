@@ -8,7 +8,7 @@ from pydantic import BaseModel
 from typing import Optional
 
 # Initialize Firebase Admin SDK
-cred = credentials.Certificate("firebase_credential/credential.json")
+cred = credentials.Certificate("/etc/secrets/credential.json")
 firebase_admin.initialize_app(cred)
 
 app = FastAPI()
