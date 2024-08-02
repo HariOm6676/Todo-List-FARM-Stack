@@ -1,7 +1,8 @@
-// src/components/LoginPage.jsx
 import React, { useState } from "react";
+import { Button, Container, Form } from "react-bootstrap";
+import { Google } from "react-bootstrap-icons"; // You can use any other Google icon you like
+import "../assets/styles/LoginPage.css"; // Import styles for the login page
 import { doSignInWithEmailAndPassword, doSignInWithGoogle } from "../auth/auth"; // Import from auth.js
-import "./LoginPage.css"; // Import styles for the login page
 
 const LoginPage = ({ onLoginSuccess }) => {
   const [email, setEmail] = useState("");
@@ -36,32 +37,57 @@ const LoginPage = ({ onLoginSuccess }) => {
   };
 
   return (
-    <div className="login-container">
-      <h2>Login</h2>
-      {error && <p className="error">{error}</p>}
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label>Email:</label>
-          <input
+    <Container
+      className="login-container my-5 p-4 rounded shadow-lg"
+      style={{ maxWidth: "400px" }}
+    >
+      <h2 className="text-center mb-4">Login</h2>
+      {error && <p className="text-danger text-center">{error}</p>}
+      <Form onSubmit={handleSubmit}>
+        <Form.Group className="mb-3" controlId="formBasicEmail">
+          <Form.Label>Email:</Form.Label>
+          <Form.Control
             type="email"
+            placeholder="Enter your email"
             value={email}
             onChange={handleEmailChange}
             required
+            className="custom-input"
           />
-        </div>
-        <div>
-          <label>Password:</label>
-          <input
+        </Form.Group>
+
+        <Form.Group className="mb-3" controlId="formBasicPassword">
+          <Form.Label>Password:</Form.Label>
+          <Form.Control
             type="password"
+            placeholder="Enter your password"
             value={password}
             onChange={handlePasswordChange}
             required
+            className="custom-input"
           />
-        </div>
-        <button type="submit">Sign In</button>
-      </form>
-      <button onClick={handleGoogleSignIn}>Sign In with Google</button>
-    </div>
+        </Form.Group>
+
+        <Button
+          variant="primary"
+          type="submit"
+          className="w-100 mb-3"
+          id="custom-btn"
+        >
+          Sign In
+        </Button>
+
+        <Button
+          variant="outline-danger"
+          className="w-100 d-flex align-items-center justify-content-center"
+          id="custom-google-btn"
+          onClick={handleGoogleSignIn}
+        >
+          <Google className="me-2" />
+          Sign In with Google
+        </Button>
+      </Form>
+    </Container>
   );
 };
 

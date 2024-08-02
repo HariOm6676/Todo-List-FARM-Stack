@@ -1,9 +1,11 @@
 import axios from "axios";
 import "bootstrap/dist/css/bootstrap.min.css";
+import { onAuthStateChanged } from "firebase/auth";
 import React, { useEffect, useState } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import "./App.css";
+import "../assets/styles/TodoList.css"; // Separate CSS file for TodoList styles
+import { auth } from "../firebase/firebase"; // Adjust the path if necessary
 
 const VideoBackground = () => (
   <video
@@ -27,15 +29,33 @@ const TodoList = () => {
   const [newDate, setNewDate] = useState(new Date());
   const [newTime, setNewTime] = useState("");
   const [quote, setQuote] = useState("");
+  const [token, setToken] = useState("");
 
   useEffect(() => {
-    axios
-      .get("http://localhost:8000/todos")
-      .then((response) => setTodos(response.data))
-      .catch((error) => console.error("Error fetching todos:", error));
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        user.getIdToken().then((idToken) => {
+          setToken(idToken);
+          fetchTodos(idToken);
+        });
+      }
+    });
 
     fetchRandomQuote();
+
+    return () => unsubscribe(); // Cleanup subscription on component unmount
   }, []);
+
+  const fetchTodos = (idToken) => {
+    axios
+      .get("http://localhost:8000/todos", {
+        headers: {
+          Authorization: `Bearer ${idToken}`,
+        },
+      })
+      .then((response) => setTodos(response.data))
+      .catch((error) => console.error("Error fetching todos:", error));
+  };
 
   const fetchRandomQuote = () => {
     axios
@@ -45,14 +65,26 @@ const TodoList = () => {
   };
 
   const addTodo = () => {
+    if (!newTodo) {
+      alert("Todo cannot be empty");
+      return;
+    }
     const formattedDate = newDate.toISOString().split("T")[0];
     axios
-      .post("http://localhost:8000/todos", {
-        text: newTodo,
-        completed: false,
-        date: formattedDate,
-        time: newTime,
-      })
+      .post(
+        "http://localhost:8000/todos",
+        {
+          text: newTodo,
+          completed: false,
+          date: formattedDate,
+          time: newTime,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      )
       .then((response) => {
         setTodos([...todos, response.data]);
         setNewTodo("");
@@ -64,7 +96,15 @@ const TodoList = () => {
 
   const toggleComplete = (id, completed) => {
     axios
-      .put(`http://localhost:8000/todos/${id}`, { completed: !completed })
+      .put(
+        `http://localhost:8000/todos/${id}`,
+        { completed: !completed },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      )
       .then((response) => {
         setTodos(todos.map((todo) => (todo._id === id ? response.data : todo)));
       })
@@ -73,7 +113,11 @@ const TodoList = () => {
 
   const deleteTodo = (id) => {
     axios
-      .delete(`http://localhost:8000/todos/${id}`)
+      .delete(`http://localhost:8000/todos/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
       .then(() => {
         setTodos(todos.filter((todo) => todo._id !== id));
       })
@@ -99,7 +143,17 @@ const TodoList = () => {
             </p>
           </blockquote>
         </div>
-        <div className="form-container">
+        <div
+          className="content-wrapper"
+          style={{
+            maxHeight: "70vh",
+            overflowY: "auto",
+            background: "transparent",
+            padding: "1rem",
+            borderRadius: "0.5rem",
+            boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
+          }}
+        >
           <h1
             className="text-center mb-4"
             style={{
@@ -111,7 +165,6 @@ const TodoList = () => {
           >
             Todo List
           </h1>
-
           <form className="mb-4" style={{ width: "100%" }}>
             <div className="mb-3">
               <input
@@ -129,6 +182,7 @@ const TodoList = () => {
                   onChange={(date) => setNewDate(date)}
                   dateFormat="yyyy-MM-dd"
                   className="form-control custom-input"
+                  minDate={new Date()} // Prevent selecting dates before today
                 />
               </div>
 
@@ -141,35 +195,62 @@ const TodoList = () => {
                 />
               </div>
             </div>
-            <button type="button" onClick={addTodo} className="btn btn-dark w-100">
+            <button
+              type="button"
+              onClick={addTodo}
+              className="btn btn-dark w-100"
+            >
               Add Todo
             </button>
           </form>
-        </div>
-        <ul className="list-group">
-          {todos.map((todo) => (
-            <li
-              key={todo._id}
-              className={`list-group-item d-flex justify-content-between align-items-center ${
-                todo.completed ? "list-group-item-success" : "list-group-item-danger"
-              }`}
-              style={{ background: "rgba(0, 0, 0, 0.5)", color: "white" }}
-            >
-              <span
-                className={`flex-fill ${
-                  todo.completed ? "text-decoration-line-through" : ""
-                }`}
-                onClick={() => toggleComplete(todo._id, todo.completed)}
-                role="button"
+          <ul className="list-group">
+            {todos.map((todo) => (
+              <li
+                key={todo._id}
+                className="list-group-item d-flex justify-content-between align-items-center"
+                style={{
+                  background: "rgba(255, 255, 255, 0.4)",
+                  borderRadius: "0.5rem",
+                }}
               >
-                {todo.text} - {todo.date} {todo.time}
-              </span>
-              <button onClick={() => deleteTodo(todo._id)} className="btn btn-danger btn-sm">
-                Delete
-              </button>
-            </li>
-          ))}
-        </ul>
+                <div>
+                  <input
+                    type="checkbox"
+                    checked={todo.completed}
+                    onChange={() => deleteTodo(todo._id, todo.completed)}
+                    className="mr-2"
+                  />
+                  <span
+                    className={todo.completed ? "completed" : ""}
+                    style={{
+                      fontFamily: "FancyFont",
+                      marginLeft: "10px",
+                      color: "black",
+                      fontSize: "1.2em",
+                    }}
+                  >
+                    {todo.text}
+                  </span>
+                  <div
+                    style={{
+                      fontSize: "1.0em",
+                      color: "black",
+                      fontFamily: "FancyFont",
+                    }}
+                  >
+                    {todo.date} {todo.time}
+                  </div>
+                </div>
+                <button
+                  className="btn btn-danger"
+                  onClick={() => deleteTodo(todo._id)}
+                >
+                  Delete
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
     </div>
   );

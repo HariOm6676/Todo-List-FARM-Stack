@@ -1,15 +1,14 @@
 import {
   GoogleAuthProvider,
+  sendEmailVerification,
+  sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signInWithPopup,
   signOut,
-  sendPasswordResetEmail,
-  updatePassword,
-  sendEmailVerification
+  updatePassword
 } from "firebase/auth";
 
-// Import the initialized auth instance from your Firebase configuration
-import { auth } from "./firebase"; 
+import { auth } from "../firebase/firebase";
 
 export const doSignInWithEmailAndPassword = (email, password) => {
   return signInWithEmailAndPassword(auth, email, password);
