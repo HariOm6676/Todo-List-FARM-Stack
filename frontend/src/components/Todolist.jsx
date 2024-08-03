@@ -48,7 +48,7 @@ const TodoList = () => {
 
   const fetchTodos = (idToken) => {
     axios
-      .get("https://todo-list-farm-stack.onrender.com//todos", {
+      .get("https://todo-list-farm-stack.onrender.com/todos", {
         headers: {
           Authorization: `Bearer ${idToken}`,
         },
@@ -72,7 +72,7 @@ const TodoList = () => {
     const formattedDate = newDate.toISOString().split("T")[0];
     axios
       .post(
-        "https://todo-list-farm-stack.onrender.com//todos",
+        "https://todo-list-farm-stack.onrender.com/todos",
         {
           text: newTodo,
           completed: false,
@@ -97,7 +97,7 @@ const TodoList = () => {
   const toggleComplete = (id, completed) => {
     axios
       .put(
-        `https://todo-list-farm-stack.onrender.com//todos/${id}`,
+        `https://todo-list-farm-stack.onrender.com/todos/${id}`,
         { completed: !completed },
         {
           headers: {
@@ -113,7 +113,7 @@ const TodoList = () => {
 
   const deleteTodo = (id) => {
     axios
-      .delete(`https://todo-list-farm-stack.onrender.com//todos/${id}`, {
+      .delete(`https://todo-list-farm-stack.onrender.com/todos/${id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
